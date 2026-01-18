@@ -4,7 +4,7 @@
 > 🔧 **Cross-platform CLI tool for merging text files and converting audio to text**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue.svg)]()
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-gold.svg)]()
 [![Language](https://img.shields.io/badge/Language-C-blue.svg)]()
 
 ---
