@@ -5,7 +5,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue.svg)]()
-[![Language](https://img.shields.io/badge/Language-C99-green.svg)]()
+[![Language](https://img.shields.io/badge/Language-C-green.svg)]()
 
 ---
 
