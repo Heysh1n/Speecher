@@ -26,7 +26,7 @@
 
 **SPEECHER** is a portable, single-executable tool that:
 1. **Merges multiple text files** (`.txt`, `.log`, `.csv`, etc.) into one organized file.
-2. **Converts audio files** (`.wav`, `.mp3`, `.ogg`) to text using local Whisper AI (offline).
+2. **Converts audio files** (`.wav`, `.mp3`, `.ogg`) to text using local Whisper AI (offline) also API (online).
 
 The application is fully self-contained — on first run, it creates all necessary directories and downloads required dependencies (Whisper engine & models) automatically.
 
@@ -73,9 +73,9 @@ SPEECHER/
 
 | Platform | Requirements |
 |----------|-------------|
-| **Linux** | `gcc`, `make`, `curl`, `ffmpeg` (optional) |
-| **macOS** | `clang` (Xcode CLI), `make`, `ffmpeg` (optional) |
-| **Windows** | MinGW-w64 (`gcc`, `make`), `ffmpeg` (optional) |
+| **Linux** | `gcc`, `make`, `curl`, `ffmpeg` |
+| **macOS** | `clang` (Xcode CLI), `make`, `ffmpeg` |
+| **Windows** | MinGW-w64 (`gcc`, `make`), `ffmpeg` `Not recommended` | 
 
 > **Note:** `ffmpeg` is required for non-WAV audio formats (MP3, OGG, etc).
 
