@@ -83,7 +83,7 @@ SPEECHER/
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/speecher.git
+git clone https://github.com/Heysh1n/speecher.git
 cd speecher
 
 # 1. Setup development environment (auto-install dependencies)
