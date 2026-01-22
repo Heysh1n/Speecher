@@ -146,15 +146,10 @@ On first run, SPEECHER will:
 
 ### Quick Workflow
 
-1. **Text Merge:**
+1. **Text Merge & Audio Transcription:**
    - Place text files in `data/input/`
-   - Select Option `[1]`
-   - Result will be in `data/output/`
-
-2. **Audio Transcription:**
-   - Place audio files in `data/input/`
-   - Select Option `[2]`
-   - (First time) Follow prompts to install Whisper and download a model
+   - Select Option `[1]` & `[2]`
+   - - If it audio follow prompts to install Whisper and download a model (only on first time)
    - Result will be in `data/output/`
 
 ---
