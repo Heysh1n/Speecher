@@ -48,6 +48,7 @@
 .tmp_versions/
 */data
 lib
+build
 modules.order
 Module.symvers
 Mkfile.old
