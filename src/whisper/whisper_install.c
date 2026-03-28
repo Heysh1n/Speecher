@@ -461,70 +461,126 @@ bool whisper_install_binary(void) {
         printf("  Using existing source: %s\n", src_dir);
     }
     
-    /* Compile */
-    printf("\n  Compiling (this may take a few minutes)...\n\n");
-    
-    char cmd[2048];
+/* Compile */
+printf("\n  Compiling (this may take a few minutes)...\n\n");
+
+char cmd[2048];
+
+/* Try old Makefile first (if exists and works) */
+bool compiled = false;
+
 #ifdef __APPLE__
-    snprintf(cmd, sizeof(cmd), 
-             "cd \"%s\" && make -j$(sysctl -n hw.ncpu) main 2>&1", src_dir);
+snprintf(cmd, sizeof(cmd), 
+         "cd \"%s\" && make -j$(sysctl -n hw.ncpu) main 2>&1", src_dir);
 #else
-    snprintf(cmd, sizeof(cmd), 
-             "cd \"%s\" && make -j$(nproc) main 2>&1", src_dir);
+snprintf(cmd, sizeof(cmd), 
+         "cd \"%s\" && make -j$(nproc) main 2>&1", src_dir);
+#endif
+
+printf("  Attempting build with Makefile...\n");
+int result = system(cmd);
+
+char test_bin[SPEECHER_PATH_MAX];
+paths_join(test_bin, sizeof(test_bin), src_dir, "main");
+
+if (result == 0 && fs_exists(test_bin)) {
+    printf("  Built successfully with Makefile\n");
+    compiled = true;
+} else {
+    printf("  Makefile build failed, trying CMake...\n\n");
+    
+    /* Check if CMake is available */
+    if (!whisper_cmd_exists("cmake")) {
+        color_println(COLOR_RED, "  CMake is required!");
+        printf("\n  Install CMake:\n");
+#ifdef __APPLE__
+        printf("    brew install cmake\n");
+#else
+        printf("    Ubuntu/Debian: sudo apt install cmake\n");
+        printf("    Arch Linux:    sudo pacman -S cmake\n");
+        printf("    Fedora:        sudo dnf install cmake\n");
+#endif
+        return false;
+    }
+    
+    /* Build with CMake */
+    snprintf(cmd, sizeof(cmd),
+             "cd \"%s\" && cmake -B build -DCMAKE_BUILD_TYPE=Release 2>&1", src_dir);
+    
+    result = system(cmd);
+    if (result != 0) {
+        color_println(COLOR_RED, "  CMake configuration failed!");
+        return false;
+    }
+    
+    printf("  CMake configured, building...\n");
+    
+#ifdef __APPLE__
+    snprintf(cmd, sizeof(cmd),
+             "cd \"%s\" && cmake --build build --config Release -j$(sysctl -n hw.ncpu) 2>&1", src_dir);
+#else
+    snprintf(cmd, sizeof(cmd),
+             "cd \"%s\" && cmake --build build --config Release -j$(nproc) 2>&1", src_dir);
 #endif
     
-    /* Run make and capture output */
-    FILE *pipe = popen(cmd, "r");
-    if (!pipe) {
-        color_println(COLOR_RED, "  Failed to run make!");
+    result = system(cmd);
+    if (result != 0) {
+        color_println(COLOR_RED, "  CMake build failed!");
         return false;
     }
     
-    char line[1024];
-    int error_count = 0;
-    
-    while (fgets(line, sizeof(line), pipe)) {
-        /* Show important lines */
-        if (strstr(line, "error:") || strstr(line, "Error:")) {
-            color_print(COLOR_RED, "  %s", line);
-            error_count++;
-        } else if (strstr(line, "warning:")) {
-            /* Skip warnings */
-        } else if (strstr(line, "CC ") || strstr(line, "CXX ")) {
-            printf("  %s", line);
-        }
-    }
-    
-    int status = pclose(pipe);
-    
-    printf("\n");
-    
-    if (status != 0 || error_count > 0) {
-        color_println(COLOR_RED, "  Compilation failed!");
-        printf("\n  Common fixes:\n");
-        printf("    - Install missing dependencies\n");
-        printf("    - Check disk space\n");
-        printf("    - Try: cd %s && make clean && make main\n", src_dir);
-        return false;
-    }
+    compiled = true;
+}
+
+if (!compiled) {
+    color_println(COLOR_RED, "  Compilation failed!");
+    printf("\n  Common fixes:\n");
+    printf("    - Install missing dependencies\n");
+    printf("    - Check disk space\n");
+    printf("    - Try: cd %s && make clean && make main\n", src_dir);
+    return false;
+}
     
     /* Copy binary */
-    char src_bin[SPEECHER_PATH_MAX];
-    char dest_bin[SPEECHER_PATH_MAX];
-    
-    paths_join(src_bin, sizeof(src_bin), src_dir, "main");
-    paths_build(dest_bin, sizeof(dest_bin), PATH_WHISPER, "whisper-cli");
-    
-    if (!fs_exists(src_bin)) {
-        color_println(COLOR_RED, "  Binary not created!");
-        printf("    Expected: %s\n", src_bin);
-        return false;
+/* Find and copy binary */
+char src_bin[SPEECHER_PATH_MAX];
+char dest_bin[SPEECHER_PATH_MAX];
+
+/* Try different locations where binary might be */
+const char *possible_paths[] = {
+    "main",                          // old Makefile
+    "build/bin/whisper-cli",         // new CMake
+    "build/bin/main",                // CMake alternative
+    NULL
+};
+
+bool found = false;
+for (int i = 0; possible_paths[i] && !found; i++) {
+    paths_join(src_bin, sizeof(src_bin), src_dir, possible_paths[i]);
+    if (fs_exists(src_bin)) {
+        printf("  Found binary: %s\n", possible_paths[i]);
+        found = true;
+        break;
     }
-    
-    if (!fs_copy_file(src_bin, dest_bin)) {
-        color_println(COLOR_RED, "  Failed to copy binary!");
-        return false;
+}
+
+if (!found) {
+    color_println(COLOR_RED, "  Binary not found!");
+    printf("  Searched in:\n");
+    for (int i = 0; possible_paths[i]; i++) {
+        char path[SPEECHER_PATH_MAX];
+        paths_join(path, sizeof(path), src_dir, possible_paths[i]);
+        printf("    %s\n", path);
     }
+    return false;
+}
+
+paths_build(dest_bin, sizeof(dest_bin), PATH_WHISPER, "whisper-cli");
+
+if (!fs_copy_file(src_bin, dest_bin)) {
+    color_println(COLOR_RED, "  Failed to copy binary!");
+    return false;
+}
     
     /* Make executable */
     char chmod_cmd[SPEECHER_PATH_MAX + 32];
